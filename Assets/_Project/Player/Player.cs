@@ -1,17 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
     [SerializeField] private PlayerData playerData;
 
     public int FacingDirection { get; private set; }
+    public bool IsGrounded { get; private set; }
     
     #region Components
     public Rigidbody2D RB { get; private set; }
     public Animator Anim;
     public PlayerInputHandler playerInput { get; private set; }
+    [SerializeField] private InputActionAsset inputAsset;
     
     #endregion
 
@@ -27,10 +30,6 @@ public class Player : MonoBehaviour
 
     public PlayerLandState LandState { get; private set; }
 
-    public PlayerWallSlideState WallSlideState { get; private set; }
-
-    public PlayerWallJumpState WallJumpState { get; private set; }
-
     public PlayerDeathState DeathState { get; private set; }
 
     #endregion
@@ -38,7 +37,6 @@ public class Player : MonoBehaviour
     #region Check Transforms
 
     [SerializeField] private Transform groundCheck;
-    [SerializeField] private Transform wallCheck;
 
     #endregion
 
@@ -61,8 +59,6 @@ public class Player : MonoBehaviour
         JumpState = new PlayerJumpState(this, StateMachine, playerData, "inAir");
         InAirState = new PlayerInAirState(this, StateMachine, playerData, "inAir");
         LandState = new PlayerLandState(this, StateMachine, playerData, "land");
-        WallSlideState = new PlayerWallSlideState(this, StateMachine, playerData, "wallSlide");
-        WallJumpState = new PlayerWallJumpState(this, StateMachine, playerData, "inAir");
         DeathState = new PlayerDeathState(this, StateMachine, playerData, "die");
     }
 
@@ -79,6 +75,7 @@ public class Player : MonoBehaviour
     private void Update()
     {
         CurrentVelocity = RB.velocity;
+        IsGrounded = CheckIfGrounded();
         StateMachine.CurrentState.LogicUpdate();
     }
 
@@ -105,10 +102,10 @@ public class Player : MonoBehaviour
         CurrentVelocity = workSpace;
     }
 
-    public void SetVelocity(float velocity, Vector2 angle, int direction)
+    public void SetVelocity(float velocity, Vector2 angle)
     {
         angle.Normalize();
-        workSpace.Set(angle.x * velocity * direction, angle.y * velocity);
+        workSpace.Set(angle.x * velocity, angle.y * velocity);
         RB.velocity = workSpace;
         CurrentVelocity = workSpace;
     }
@@ -120,18 +117,6 @@ public class Player : MonoBehaviour
     public bool CheckIfGrounded() 
     {
         return Physics2D.OverlapCircle(groundCheck.position, playerData.groundCheckRadius, playerData.whatIsGround);
-    }
-
-    public bool CheckIfTouchingWall()
-    {
-        return Physics2D.Raycast(wallCheck.position, Vector2.right * FacingDirection, 
-            playerData.wallCheckDistance, playerData.whatIsGround);
-    }
-
-    public bool CheckIfTouchingWallBack()
-    {
-        return Physics2D.Raycast(wallCheck.position, Vector2.right * -FacingDirection,
-            playerData.wallCheckDistance, playerData.whatIsGround);
     }
 
     public void CheckIfShouldFlip(int xInput)
@@ -156,6 +141,13 @@ public class Player : MonoBehaviour
         FacingDirection *= -1;
         transform.Rotate(0.0f, 180.0f, 0.0f);
     }
+
+    public void DisableInput()
+    {
+        
+        inputAsset.Disable();
+    }
+
     public void Die()
     {
         StateMachine.ChangeState(DeathState);
@@ -164,13 +156,12 @@ public class Player : MonoBehaviour
     public void Teleport(Vector3 position, float force, Vector2 direction)
     {
         transform.position = position;
-        SetVelocity(force, direction, 1);        
+        SetVelocity(force, direction);        
     }
 
     public void OnDrawGizmos()
     {
         Gizmos.DrawWireSphere(groundCheck.position, playerData.groundCheckRadius);
-        Debug.DrawRay(wallCheck.position, Vector2.right * FacingDirection, Color.green);
     }
 
     #endregion

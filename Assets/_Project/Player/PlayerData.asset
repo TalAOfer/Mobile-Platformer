@@ -13,21 +13,16 @@ MonoBehaviour:
   m_Name: PlayerData
   m_EditorClassIdentifier: 
   events: {fileID: 11400000, guid: 8e1878f9233b4544a8c52e292946586a, type: 2}
+  deathDuration: 0.5
   angleDevisor: 16
   shouldSnapAim: 0
   whatIsGround:
     serializedVersion: 2
     m_Bits: 64
   groundCheckRadius: 0.16
-  wallCheckDistance: 0.55
   movementSpeed: 5
   dampJumping: 0
   jumpForce: 13
   amountOfJumps: 1
   coyoteTime: 0.15
   variableJumpHeightMult: 0.5
-  canSlide: 0
-  wallSlideVelocity: 3
-  wallJumpVelocity: 20
-  wallJumpTime: 0.15
-  wallJumpAngle: {x: 1.5, y: 3}

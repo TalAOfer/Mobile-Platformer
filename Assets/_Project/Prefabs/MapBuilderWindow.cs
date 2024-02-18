@@ -1,15 +1,12 @@
-
 #if UNITY_EDITOR
 
 using UnityEditor;
 using UnityEngine;
+
 public class MapBuilderWindow : EditorWindow
 {
-
     private MapBuilderTool mapBuilderTool;
-    private GameObject tempInstance;
     private Vector2 scrollPos;
-    private bool isPlacingPrefab = false;
 
     [MenuItem("Tools/Map Builder")]
     private static void ShowWindow()
@@ -34,51 +31,21 @@ public class MapBuilderWindow : EditorWindow
         {
             if (GUILayout.Button(new GUIContent(prefab.name, AssetPreview.GetAssetPreview(prefab)), GUILayout.Height(50)))
             {
-                StartPlacingPrefab(prefab);
+                InstantiatePrefabAtLocation(prefab);
             }
         }
         EditorGUILayout.EndScrollView();
     }
 
-    private void StartPlacingPrefab(GameObject prefab)
+    private void InstantiatePrefabAtLocation(GameObject prefab)
     {
-        if (isPlacingPrefab && tempInstance != null) DestroyImmediate(tempInstance);
+        // Define the location where you want the prefab to be instantiated
+        Vector3 instantiateLocation = new Vector3(-11, 3, 0); // Example location
 
-        tempInstance = Instantiate(prefab);
-        tempInstance.hideFlags = HideFlags.HideAndDontSave;
-        isPlacingPrefab = true;
-
-        // Attach to the scene GUI event
-        SceneView.duringSceneGui += OnSceneGUI;
+        // Instantiate the prefab at the specified location
+        GameObject instantiatedPrefab = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        instantiatedPrefab.transform.position = instantiateLocation;
     }
-
-    private void OnSceneGUI(SceneView sceneView)
-    {
-        if (!isPlacingPrefab) return;
-
-        HandleUtility.AddDefaultControl(GUIUtility.GetControlID(FocusType.Passive)); // Block other mouse interactions
-        Ray ray = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit))
-        {
-            tempInstance.transform.position = hit.point;
-        }
-
-        if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
-        {
-            GUIUtility.hotControl = 0;
-            isPlacingPrefab = false;
-            tempInstance.hideFlags = HideFlags.None; // Make the instance visible in hierarchy
-            Undo.RegisterCreatedObjectUndo(tempInstance, "Place " + tempInstance.name); // Allow undo
-            tempInstance = null; // Clear the temp instance
-            SceneView.duringSceneGui -= OnSceneGUI; // Detach from the scene GUI event
-            Event.current.Use(); // Consume the event
-        }
-
-        sceneView.Repaint();
-    }
-
 }
 
 #endif

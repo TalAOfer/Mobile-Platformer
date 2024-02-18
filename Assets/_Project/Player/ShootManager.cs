@@ -14,12 +14,21 @@ public class ShootManager : MonoBehaviour
     [SerializeField] private float shootForce = 2;
     [SerializeField] private GameEvent TeleportPlayer;
     Vector3 temp = Vector3.zero;
+    Animator anim;
     public void EnableShooting() => canShoot = true;
 
     private void Awake()
     {
+        anim = GetComponent<Animator>();
         player = GetComponentInParent<Player>();
         lineHandler = GetComponent<BowLineManager>();
+    }
+
+    public void Charge()
+    {
+        anim.Play("Charge");
+        lineHandler.EnableDraw(true);
+        isCharging = true;
     }
 
     private void Update()
@@ -28,8 +37,9 @@ public class ShootManager : MonoBehaviour
         {
             if (canShoot)
             {
-                isCharging = true;
+                anim.Play("Charge");
                 lineHandler.EnableDraw(true);
+                isCharging = true;
             }
         }
 
@@ -39,10 +49,15 @@ public class ShootManager : MonoBehaviour
             canShoot = false;
             lineHandler.EnableDraw(false);
             Shoot();
+            anim.Play("Idle");
+            transform.eulerAngles = Vector3.zero;
         }
 
-        temp.z = player.playerInput.AimingAngle;
-        transform.eulerAngles = temp;
+        if (isCharging)
+        {
+            temp.z = player.playerInput.AimingAngle;
+            transform.eulerAngles = temp;
+        }
     }
 
     private void Shoot()
